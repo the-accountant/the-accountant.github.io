@@ -1,28 +1,194 @@
-<!DOCTYPE html><html lang="en"><head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes">
+<!DOCTYPE html><html><head>
+  <meta charset="utf-8">
+  <title>Heatmaps</title>
+  <style>
+    /* Always set the map height explicitly to define the size of the div
+     * element that contains the map. */
+    #map {
+      height: 100%;
+    }
 
-    <title>maps-overlay</title>
-    <meta name="description" content="maps-overlay description">
+    /* Optional: Makes the sample page fill the window. */
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
 
-    <!-- See https://goo.gl/OOhYW5 -->
-    <link rel="manifest" href="/manifest.json">
+    #floating-panel {
+      position: absolute;
+      top: 10px;
+      left: 25%;
+      z-index: 5;
+      background-color: #fff;
+      padding: 5px;
+      border: 1px solid #999;
+      text-align: center;
+      font-family: 'Roboto', 'sans-serif';
+      line-height: 30px;
+      padding-left: 10px;
+    }
 
-    <script src="/bower_components/webcomponentsjs/webcomponents-loader.js"></script>
+    #floating-panel {
+      background-color: #fff;
+      border: 1px solid #999;
+      left: 25%;
+      padding: 5px;
+      position: absolute;
+      top: 10px;
+      z-index: 5;
+    }
+  </style>
+</head>
 
-    <!--<link rel="import" href="/src/maps-overlay-app/maps-overlay-app.html">-->
-    <!--<link rel="import" href="/src/maps-overlay-app/maps-polygon-app.html">-->
-    <link rel="import" href="bower_components/google-map/google-map-elements.html">
-  </head>
-  <body>
-    <!--<maps-polygon-app></maps-polygon-app>-->
-    <google-map latitude="37.77493" longitude="-122.41942" api-key="[[_key]]">
-      <google-map-poly closed="" fill-color="blue" fill-opacity=".5">
-        <google-map-point latitude="36.77491" longitude="-121.41941"></google-map-point>
-        <google-map-point latitude="38.77492" longitude="-122.41942"></google-map-point>
-        <google-map-point latitude="36.77493" longitude="-123.41943"></google-map-point>
-      </google-map-poly>
-    </google-map>
-  
+<body>
+<div id="floating-panel">
+  <button onclick="toggleHeatmap()">Toggle Heatmap</button>
+  <button onclick="changeGradient()">Change gradient</button>
+  <button onclick="changeRadius()">Change radius</button>
+  <button onclick="changeOpacity()">Change opacity</button>
+</div>
+<div id="map"></div>
+<script>
+
+  // This example requires the Visualization library. Include the libraries=visualization
+  // parameter when you first load the API. For example:
+  // <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=visualization">
+
+  var map, heatmap;
+
+  var data = [
+    {
+      name: "Frank Wijmans",
+      address: '1065 CH',
+      website: 'http://www.woopy.nl',
+      lat: 52.3589661,
+      lng: 4.823281
+    },
+    {
+      address: '2511 CL',
+      lat: 52.0786467,
+      lng: 4.3144497
+    },
+    {
+      address: '3824 DK',
+      lat: 52.1947546,
+      lng: 5.3777556
+    },
+    {
+      address: '1223 GK',
+      lat: 52.2308983,
+      lng: 5.1991128
+    },
+    {
+      address: '1316 LG',
+      lat: 52.3850857,
+      lng: 5.2258091
+    },
+    {
+      address: '1087 MN',
+      lat: 52.347334,
+      lng: 5.0077305
+    }
+  ];
+
+  function initMap() {
+    map = new google.maps.Map(document.getElementById('map'), {
+      zoom: 13,
+      center: {lat: 52.3589661, lng: 4.823281},
+      mapTypeId: 'satellite'
+    });
+
+    heatmap = new google.maps.visualization.HeatmapLayer({
+      data: getPoints(data),
+      map: map
+    });
+
+    addMarkers(data);
+  }
+
+  function addMarkers(markerData) {
+
+    markerData.map(item => {
+
+      var infoContent = '';
+
+      if(item.address){
+        infoContent += '<h1>' + item.address + '</h1>';
+      }
+      if(item.name){
+        infoContent += '<p>' + item.name + '</p>';
+      }
+      if(item.website){
+        infoContent += '<a href="'+item.website+'">' + item.website + '</a>';
+      }
+
+      var infowindow = new google.maps.InfoWindow({
+        content: infoContent
+      });
+
+      var marker = new google.maps.Marker({
+        position: new google.maps.LatLng(item.lat,item.lng),
+        map: map,
+        title: item.address
+      });
+
+      marker.addListener('click', function () {
+        if(isInfoWindowOpen(infowindow)) {
+          infowindow.close();
+        } else {
+          infowindow.open(map, marker);
+        }
+      });
+
+    });
+
+  }
+
+  function isInfoWindowOpen(infoWindow){
+    var map = infoWindow.getMap();
+    return (map !== null && typeof map !== "undefined");
+  }
+
+  function toggleHeatmap() {
+    heatmap.setMap(heatmap.getMap() ? null : map);
+  }
+
+  function changeGradient() {
+    var gradient = [
+      'rgba(0, 255, 255, 0)',
+      'rgba(0, 255, 255, 1)',
+      'rgba(0, 191, 255, 1)',
+      'rgba(0, 127, 255, 1)',
+      'rgba(0, 63, 255, 1)',
+      'rgba(0, 0, 255, 1)',
+      'rgba(0, 0, 223, 1)',
+      'rgba(0, 0, 191, 1)',
+      'rgba(0, 0, 159, 1)',
+      'rgba(0, 0, 127, 1)',
+      'rgba(63, 0, 91, 1)',
+      'rgba(127, 0, 63, 1)',
+      'rgba(191, 0, 31, 1)',
+      'rgba(255, 0, 0, 1)'
+    ];
+    heatmap.set('gradient', heatmap.get('gradient') ? null : gradient);
+  }
+
+  function changeRadius() {
+    heatmap.set('radius', heatmap.get('radius') ? null : 20);
+  }
+
+  function changeOpacity() {
+    heatmap.set('opacity', heatmap.get('opacity') ? null : 0.2);
+  }
+
+
+  // Heatmap data: 500 Points
+  function getPoints(pointData) {
+    return pointData.map(item => new google.maps.LatLng(item.lat, item.lng));
+  }
+</script>
+<script async="" defer="" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBnCbGVdUJ-T_mdP9QWHqQFByxG8sZJQP8&amp;libraries=visualization&amp;callback=initMap">
+</script>
 
 </body></html>
